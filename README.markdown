@@ -1,6 +1,6 @@
 # Cl-HTMX
 
-Common lisp macro to enable web development using (HTMX)[https://htmx.org/] 
+Common lisp macro to enable web development using [HTMX](https://htmx.org/) 
 
 ## Usage
 
@@ -13,12 +13,12 @@ ql:quickload :cl-htmx
 
 ## Author
 
-* Biruh Mekonnen (biruh.t@gmail.com)
+* Biruh Mekonnen (biruh dot t at gmail.com)
 
 ## Copyright
 
-Copyright (c) 2023 Biruh Mekonnen (biruh.t@gmail.com)
+Copyright (c) 2023 Biruh Mekonnen (biruh dot t at gmail.com)
 
 ## License
 
-Licensed under the LLGPL License.
+Licensed under the MIT License.
