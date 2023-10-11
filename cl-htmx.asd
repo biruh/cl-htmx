@@ -2,7 +2,7 @@
   :version "0.1.0"
   :author "Biruh Mekonnen"
   :license "MIT"
-  :depends-on ("hunchentoot")
+  :depends-on (:hunchentoot)
   :components ((:module "src"
                 :components
                 ((:file "main"))))
