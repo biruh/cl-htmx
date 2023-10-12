@@ -11,12 +11,13 @@
 
 
 (defun p-list-to-a-list (p-list)
-  (loop while p-list
-        for key = (pop p-list)
-        for value = (pop p-list)
-        collect (cons key value)))
+  (loop :while p-list
+        :for key = (pop p-list)
+        :for value = (pop p-list)
+        :collect (cons key value)))
 
 (defun extract-parts (form)
+  (format t "~%processing ~a" form)
   (if (listp form)
       (let* ((len (length form)))
         (cond
@@ -42,46 +43,36 @@
       form))
 
 (defun validate-parts (ip-form)
-  (when (listp ip-form)
+  (format t "~%validating: ~a" ip-form)
+
+  (when (and (not (null ip-form))
+             (listp ip-form))
     (destructuring-bind (&key tag props no-closing-tag child) ip-form
       (if no-closing-tag
-          (assert (null child) nil "an element with no closing tag can't have child: ~a" (list tag)))
+          (assert (null child) nil "validation fail: an element with no closing tag can't have child: ~a" tag))
       (loop :for (ident . value) :in props
             :do  (assert (keywordp ident)
                          nil
-                         "property identifiers must be a keyword ~a is not"
+                         "validation fail: property identifiers must be a keyword ~a is not"
                          ident))
       (validate-parts child))))
 
 
 (defun extract-and-validate (form)
-  (assert (listp form) nil "form must be list but is ~a" form)
+  (assert (listp form) nil "validation fail: top element must be list but is ~a" form)
   (let ((ir (extract-parts form)))
     (validate-parts ir)
     ir))
 
-(extract-and-validate '(div :a b (input- :value "test")))
 
-(defun render-tag (tag stream)
-  (cond
-    ((stringp tag) tag)
-    ((null tag) nil)
-    ((listp tag) )
-    )
-
-  (let ((parent-tag (string (first body))))
-    (assert (not (and (no-closing-tag parent-tag)
-                      (= (length body) 2)))
-            nil
-            "you cannot have children for ~a"
-            parent-tag)
-    (cond
-      ((no-closing-tag parent-tag)
-       (format stream "<~a />" (subseq parent-tag 0 (- (length parent-tag) 1))))
-      ((string= "-" parent-tag) (format stream ""))
-      (t (format stream "<~a></~a>" parent-tag parent-tag)))
-    )
-  )
+(defun render-ir (form stream)
+  (let (ir (extract-and-validate form))
+    (destructuring-bind (&key tag props no-closing-tag child) ir
+      (cond
+        ((no-closing-tag parent-tag)
+         (format stream "<~a />" (subseq parent-tag 0 (- (length parent-tag) 1))))
+        ((string= "-" parent-tag) (format stream ""))
+        (t (format stream "<~a></~a>" parent-tag parent-tag))))))
 
 (defun render-html (body stream)
   (assert (listp body) nil "top element needs to be a list: ~a" body)
