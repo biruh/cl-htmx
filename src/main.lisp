@@ -4,9 +4,33 @@
 
 (in-package :cl-htmx)
 
+
+
+
+(defparameter *port* 4242)
+(defvar *server-handler*)
+
+(defun start ()
+  (stop)
+  (setf *server-handler*
+        (hunchentoot:start (make-instance 'hunchentoot:easy-acceptor :port *port*))))
+
+
+(defun stop ()
+  (when *server-handler*
+    (hunchentoot:stop *server-handler*)
+    (setf *server-handler* nil)))
+
+
+
+
+
+
+
+
 (defconstant +no-closing-designator+ #\-)
 
-(defun no-closing-tag (tag)
+(defun no-closing-tag-p (tag)
   (char-equal (aref tag (1- (length tag))) +no-closing-designator+))
 
 
@@ -26,19 +50,19 @@
            (let ((tag (string (nth 0 form))))
              `(:tag ,tag
                :props nil
-               :no-closing-tag ,(no-closing-tag tag)
+               :no-closing-tag ,(no-closing-tag-p tag)
                :child nil)))
           ((evenp len)
            (let ((tag (string (nth 0 form))))
              `(:tag ,tag
                :props ,(p-list-to-a-list (subseq form 1 (-  len 1)))
-               :no-closing-tag ,(no-closing-tag tag)
+               :no-closing-tag ,(no-closing-tag-p tag)
                :child ,(extract-parts (nth (- len 1) form)))))
           ((oddp len)
            (let ((tag (string (nth 0 form))))
              `(:tag ,tag
                :props ,(p-list-to-a-list (subseq form 1 len))
-               :no-closing-tag ,(no-closing-tag tag)
+               :no-closing-tag ,(no-closing-tag-p tag)
                :child nil)))))
       form))
 
@@ -65,21 +89,47 @@
     ir))
 
 
+
+
+(defun render-html (ir stream)
+  (destructuring-bind (&key tag props no-closing-tag child) ir
+    (cond
+      (no-closing-tag (format stream "<~a ~a />" tag (render-props props)))
+      (t (format stream "<~a ~a>~a</~a>"
+                 tag
+                 (render-props props)
+                 (render-html child stream)
+                 tag)))))
+
 (defun render-ir (form stream)
-  (let (ir (extract-and-validate form))
-    (destructuring-bind (&key tag props no-closing-tag child) ir
-      (cond
-        ((no-closing-tag parent-tag)
-         (format stream "<~a />" (subseq parent-tag 0 (- (length parent-tag) 1))))
-        ((string= "-" parent-tag) (format stream ""))
-        (t (format stream "<~a></~a>" parent-tag parent-tag))))))
+  (let ((ir (extract-and-validate form)))
+    (render-html ir stream)))
+
+
+(defun render-app ()
+  (render-ir '(div "test") nil))
+
+(render-app)
+
+(hunchentoot:define-easy-handler (app :uri "/app") ()
+  (setf (hunchentoot:content-type*) "text/plain")
+  (render-app))
 
 (defun render-html (body stream)
-  (assert (listp body) nil "top element needs to be a list: ~a" body)
-  (render-tag body stream))
-
-(render-html '(input-) nil)
+         (assert (listp body) nil "top element needs to be a list: ~a" body)
+         (render-ir body stream))
 
 
-(defmacro htmx (body)
-  )
+(defmacro htmx (name body)
+  (let ((render-name-str (format nil "render-~a") (string name)))
+    `(progn
+       (defun ,render-name-str ()
+         (format nil "<a></a>"))
+
+       (hunchentoot:define-easy-handler (app :uri "/app") ()
+         (setf (hunchentoot:content-type*) "text/plain")
+         (format nil "Hey~@[ ~A~]!" name))
+
+       (defun render-html (body stream)
+         (assert (listp body) nil "top element needs to be a list: ~a" body)
+         (render-ir body stream)))))
