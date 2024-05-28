@@ -13,6 +13,8 @@
   :author "Biruh Mekonnen"
   :license "MIT"
   :depends-on ("cl-htmx"
+               "spinneret"
+               "hunchentoot"
                "rove")
   :components ((:module "tests"
                 :components
