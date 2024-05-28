@@ -11,12 +11,14 @@ Common lisp macros to enable web development using [HTMX](https://htmx.org/)
 
 ## Usage
 
-The project is not yet submitted to quicklisp repository. It will be submitted onces the API matures.
+This project is on active development and not yet submitted to quicklisp repository. It will be submitted onces the API matures.
 
 To use the project, check out the repository to your quicklisp local directory and do
 
-`
-ql:quickload :cl-htmx
+```lisp
+(ql:quickload :cl-htmx)
+```
+
 
 
 ## API Design (DRAFT)
